@@ -1,3 +1,4 @@
+
 # AQI Prediction Dashboard
 
 A comprehensive Air Quality Index (AQI) prediction system with machine learning models, automated pipelines, and a modern web dashboard.
@@ -154,3 +155,6 @@ python main.py --mode scheduler
 ## License
 
 MIT License - see LICENSE file for details
+=======
+# 10Pearls-AQI-Predictor
+>>>>>>> 96b0b720bf9998cfc5be0f1a08aa787f4c7ffd5e
