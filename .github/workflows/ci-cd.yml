@@ -1,0 +1,80 @@
+name: AQI Prediction CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        # Add test commands here
+        python -c "import data_fetcher; print('Data fetcher import successful')"
+        python -c "import feature_engineering; print('Feature engineering import successful')"
+        python -c "import model_training; print('Model training import successful')"
+
+  train-models:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up MongoDB
+      uses: supercharge/mongodb-github-action@1.8.0
+      with:
+        mongodb-version: '5.0'
+
+    - name: Create .env file
+      run: |
+        echo "OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}" >> .env
+        echo "AQICN_API_KEY=${{ secrets.AQICN_API_KEY }}" >> .env
+        echo "MONGO_URI=mongodb://localhost:27017/" >> .env
+
+    - name: Run model training
+      run: |
+        python -c "from model_training import ModelTrainer; trainer = ModelTrainer(); trainer.train_all_models()"
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: train-models
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Deploy to server
+      run: |
+        # Add deployment commands here
+        echo "Deployment would happen here"
